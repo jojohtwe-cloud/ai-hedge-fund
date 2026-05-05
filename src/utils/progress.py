@@ -32,13 +32,19 @@ class AgentProgress:
     def start(self):
         """Start the progress display."""
         if not self.started:
-            self.live.start()
+            try:
+                self.live.start()
+            except Exception:
+                pass
             self.started = True
 
     def stop(self):
         """Stop the progress display."""
         if self.started:
-            self.live.stop()
+            try:
+                self.live.stop()
+            except Exception:
+                pass
             self.started = False
 
     def update_status(self, agent_name: str, ticker: Optional[str] = None, status: str = "", analysis: Optional[str] = None):

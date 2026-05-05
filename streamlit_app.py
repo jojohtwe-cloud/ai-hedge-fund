@@ -1,6 +1,7 @@
 import streamlit as st
 import sys
 import os
+import re
 from datetime import datetime, timedelta
 
 # Add src to path
@@ -23,6 +24,11 @@ from src.utils.display import print_trading_output
 import io
 import contextlib
 
+_ANSI_ESCAPE = re.compile(r'\x1b\[[0-9;]*[mK]')
+
+def strip_ansi(text: str) -> str:
+    return _ANSI_ESCAPE.sub('', text)
+
 st.title("AI Hedge Fund Simulator")
 
 st.markdown("""
@@ -44,9 +50,19 @@ end_date = st.sidebar.date_input("End Date", datetime.now())
 
 show_reasoning = st.sidebar.checkbox("Show Reasoning", value=False)
 
-# Model selection
-model_provider = st.sidebar.selectbox("Model Provider", ["OpenAI", "Anthropic", "Groq", "DeepSeek"])
-model_name = st.sidebar.selectbox("Model Name", ["gpt-4o", "claude-3-5-sonnet-20241022", "llama3-70b-8192", "deepseek-chat"])
+# Model selection — names update based on chosen provider
+MODEL_OPTIONS = {
+    "OpenAI": ["gpt-4o", "gpt-4o-mini", "gpt-4.1"],
+    "Anthropic": ["claude-opus-4-7", "claude-sonnet-4-6", "claude-3-5-sonnet-20241022"],
+    "Groq": ["llama3-70b-8192", "mixtral-8x7b-32768", "gemma2-9b-it"],
+    "DeepSeek": ["deepseek-chat", "deepseek-reasoner"],
+}
+
+model_provider = st.sidebar.selectbox("Model Provider", list(MODEL_OPTIONS.keys()))
+model_name = st.sidebar.selectbox("Model Name", MODEL_OPTIONS[model_provider])
+
+st.sidebar.markdown("---")
+st.sidebar.markdown("**Important**: Set your API keys in Streamlit Cloud secrets or a `.env` file.")
 
 if st.button("Run Hedge Fund"):
     if not tickers:
@@ -55,7 +71,6 @@ if st.button("Run Hedge Fund"):
         st.error("Start date must be before end date.")
     else:
         with st.spinner("Running AI Hedge Fund... This may take a few minutes."):
-            # Construct portfolio
             portfolio = {
                 "cash": initial_cash,
                 "margin_requirement": margin_requirement,
@@ -90,17 +105,13 @@ if st.button("Run Hedge Fund"):
                     model_provider=model_provider,
                 )
 
-                # Capture print output
                 output_buffer = io.StringIO()
                 with contextlib.redirect_stdout(output_buffer):
                     print_trading_output(result)
 
                 st.success("Hedge Fund Run Complete!")
-                st.text_area("Output", output_buffer.getvalue(), height=400)
+                st.text_area("Output", strip_ansi(output_buffer.getvalue()), height=400)
 
             except Exception as e:
                 st.error(f"An error occurred: {str(e)}")
                 st.text("Please check your API keys and try again.")
-
-st.sidebar.markdown("---")
-st.sidebar.markdown("**Important**: Set your API keys in a `.env` file before running.")
