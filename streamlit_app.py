@@ -2,18 +2,26 @@ import streamlit as st
 import sys
 import os
 from datetime import datetime, timedelta
-from dotenv import load_dotenv
 
 # Add src to path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
+# Inject Streamlit Cloud secrets into environment
+if hasattr(st, "secrets"):
+    for _k, _v in st.secrets.items():
+        if isinstance(_v, str):
+            os.environ.setdefault(_k, _v)
 
 from src.main import run_hedge_fund
 from src.utils.display import print_trading_output
 import io
 import contextlib
-
-# Load environment variables
-load_dotenv()
 
 st.title("AI Hedge Fund Simulator")
 
