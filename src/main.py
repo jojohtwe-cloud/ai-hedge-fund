@@ -14,7 +14,6 @@ from src.graph.state import AgentState
 from src.utils.display import print_trading_output
 from src.utils.analysts import ANALYST_ORDER, get_analyst_nodes
 from src.utils.progress import progress
-from src.utils.visualize import save_graph_as_png
 from src.cli.input import (
     parse_cli_inputs,
 )
@@ -134,6 +133,7 @@ def create_workflow(selected_analysts=None):
 
 
 if __name__ == "__main__":
+    from src.utils.visualize import save_graph_as_png
     inputs = parse_cli_inputs(
         description="Run the hedge fund trading system",
         require_tickers=True,
